@@ -9,6 +9,7 @@ import com.example.quanlytruonghoc.models.data.req.UserPassReq;
 import com.example.quanlytruonghoc.models.data.req.UserReq;
 import com.example.quanlytruonghoc.models.data.req.UserStatusReq;
 import com.example.quanlytruonghoc.models.data.req.UserUpRoleReq;
+import com.example.quanlytruonghoc.models.mapper.UserMapper;
 import com.example.quanlytruonghoc.models.repositories.IRoleRepository;
 import com.example.quanlytruonghoc.models.repositories.IUserRepository;
 import com.example.quanlytruonghoc.models.services.IUserService;
@@ -27,6 +28,7 @@ public class UserServiceImpl implements IUserService {
     private final IUserRepository userRepository;
     private final IRoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final UserMapper userMapper;
 
     @Override
     public User createUser(UserReq req) {
@@ -38,14 +40,10 @@ public class UserServiceImpl implements IUserService {
         }
 
         log.info("Saving new User entity to database for username: {}", req.getUsername());
-        User user = User.builder()
-                .username(req.getUsername())
-                .password(passwordEncoder.encode(req.getPassword()))
-                .email(req.getEmail())
-                .fullName(req.getFullName())
-                .roles(new HashSet<>(roleRepository.findAllById(req.getRoleIds())))
-                .status(UserStatus.INACTIVE)
-                .build();
+        User user = userMapper.toEntity(req);
+        user.setPassword(passwordEncoder.encode(req.getPassword()));
+        user.setRoles(new HashSet<>(roleRepository.findAllById(req.getRoleIds())));
+        user.setStatus(UserStatus.INACTIVE);
         return userRepository.save(user);
     }
 
@@ -95,9 +93,7 @@ public class UserServiceImpl implements IUserService {
             throw new BadRequestException("Bạn không có quyền chỉnh sửa thông tin người dùng này");
         }
         log.info("Updating user record with ID: {}", id);
-        updateUser.setUsername(req.getUsername());
-        updateUser.setEmail(req.getEmail());
-        updateUser.setFullName(req.getFullName());
+        userMapper.updateEntity(req, updateUser);
         updateUser.setRoles(new HashSet<>(roleRepository.findAllById(req.getRoleIds())));
         updateUser.setStatus(UserStatus.INACTIVE);
         return userRepository.save(updateUser);
