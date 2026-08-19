@@ -1,6 +1,6 @@
 package com.example.quanlytruonghoc.configs;
 
-import com.example.quanlytruonghoc.models.constants.CourseStatus;
+import com.example.quanlytruonghoc.models.data.dto.constants.CourseStatus;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.stereotype.Component;
 

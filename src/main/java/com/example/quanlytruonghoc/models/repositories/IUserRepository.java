@@ -1,7 +1,7 @@
 package com.example.quanlytruonghoc.models.repositories;
 
-import com.example.quanlytruonghoc.models.constants.RoleName;
-import com.example.quanlytruonghoc.models.constants.UserStatus;
+import com.example.quanlytruonghoc.models.data.dto.constants.RoleName;
+import com.example.quanlytruonghoc.models.data.dto.constants.UserStatus;
 import com.example.quanlytruonghoc.models.data.entities.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -30,10 +30,10 @@ public interface IUserRepository extends JpaRepository<User,Long> {
     List<User> findAllByRoleAndStatus(@Param("role") RoleName role, @Param("status") UserStatus status);
 
     @Query("""
-       SELECT u 
-       FROM User u 
-       JOIN u.roles r 
-       WHERE u.id = :id AND r.roleName = 'TEACHER'
+                   SELECT u 
+                   FROM User u 
+                   JOIN u.roles r 
+                   WHERE u.id = :id AND r.roleName = 'TEACHER'
        """)
     Optional<User> findTeacherById(@Param("id") Long id);
 

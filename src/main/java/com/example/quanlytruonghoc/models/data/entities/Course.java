@@ -1,13 +1,12 @@
 package com.example.quanlytruonghoc.models.data.entities;
 
-import com.example.quanlytruonghoc.models.constants.CourseStatus;
+import com.example.quanlytruonghoc.models.data.dto.constants.CourseStatus;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Entity
 @Table(name = "courses")
@@ -30,20 +29,21 @@ public class Course {
 
     @ManyToOne
     @JoinColumn(name = "teacher_id")
-    @JsonIgnoreProperties({"password", "roles", "otpCode", "otpExpiration","status"})
     private User teacher;
 
-    @Column(name = "price", precision = 10, scale = 2)
-    private BigDecimal price = BigDecimal.ZERO;
+    @ManyToOne
+    @JoinColumn(name = "created_by")
+    private User createdBy;
 
-    @Column(name = "duration_hours")
-    private Long durationHours;
+    @ManyToOne
+    @JoinColumn(name = "department_id")
+    private Department department;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
     private CourseStatus status = CourseStatus.DRAFT;
 
-    @Column(name = "created_at", updatable = false)
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at")

@@ -2,14 +2,15 @@ package com.example.quanlytruonghoc.models.services.impl;
 
 import com.example.quanlytruonghoc.exceptions.AuthException;
 import com.example.quanlytruonghoc.exceptions.NotFoundException;
-import com.example.quanlytruonghoc.models.constants.RoleName;
-import com.example.quanlytruonghoc.models.constants.UserStatus;
+import com.example.quanlytruonghoc.models.data.dto.constants.RoleName;
+import com.example.quanlytruonghoc.models.data.dto.constants.UserStatus;
 import com.example.quanlytruonghoc.models.data.entities.Role;
 import com.example.quanlytruonghoc.models.data.entities.User;
-import com.example.quanlytruonghoc.models.data.req.ActiveUserReq;
-import com.example.quanlytruonghoc.models.data.req.LoginReq;
-import com.example.quanlytruonghoc.models.data.req.RegisterReq;
+import com.example.quanlytruonghoc.models.data.req.auth.ActiveUserReq;
+import com.example.quanlytruonghoc.models.data.req.auth.LoginReq;
+import com.example.quanlytruonghoc.models.data.req.auth.RegisterReq;
 import com.example.quanlytruonghoc.models.data.res.LoginRes;
+import com.example.quanlytruonghoc.models.data.mapper.UserMapper;
 import com.example.quanlytruonghoc.models.repositories.IRoleRepository;
 import com.example.quanlytruonghoc.models.repositories.IUserRepository;
 import com.example.quanlytruonghoc.models.services.IAuthService;
@@ -20,7 +21,6 @@ import com.example.quanlytruonghoc.security.jwt.TokenBlacklistService;
 import com.example.quanlytruonghoc.security.principal.CustomUserDetails;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.LockedException;
@@ -47,6 +47,7 @@ public class AuthServiceImpl implements IAuthService {
     private final IMailService mailService;
     private final JwtTokenFilter jwtTokenFilter;
     private final TokenBlacklistService tokenBlacklistService;
+    private final UserMapper userMapper;
 
     @Override
     public LoginRes login(LoginReq req) {
@@ -86,22 +87,14 @@ public class AuthServiceImpl implements IAuthService {
         );
         String otp = String.valueOf((int) ((Math.random() * 900000) + 100000));
         LocalDateTime expiration = LocalDateTime.now().plusMinutes(1);
-
-        User user = User.builder()
-                .username(req.getUsername())
-                .email(req.getEmail())
-                .password(passwordEncoder.encode(req.getPassword()))
-                .fullName(req.getFullName())
-                .roles(roles)
-                .status(UserStatus.INACTIVE)
-                .otpCode(otp)
-                .otpExpiration(expiration)
-                .build();
-
+        User user = userMapper.toEntity(req);
+        user.setPassword(passwordEncoder.encode(req.getPassword()));
+        user.setRoles(roles);
+        user.setStatus(UserStatus.INACTIVE);
+        user.setOtpCode(otp);
+        user.setOtpExpiration(expiration);
         userRepository.save(user);
-
         mailService.sendOtpMail(user.getEmail(), otp);
-
     }
 
     @Override
@@ -145,13 +138,7 @@ public class AuthServiceImpl implements IAuthService {
         return "Kích hoạt tài khoản thành công! Bạn có thể đăng nhập ngay bây giờ.";
     }
 
-    @Override
-    public boolean verifyToken(String token) {
-        if (token == null || token.trim().isEmpty()) {
-            return false;
-        }
-        return jwtUtils.validateToken(token);
-    }
+
 
 
 

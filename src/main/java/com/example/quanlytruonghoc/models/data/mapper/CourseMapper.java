@@ -1,0 +1,36 @@
+package com.example.quanlytruonghoc.models.data.mapper;
+
+import com.example.quanlytruonghoc.models.data.entities.Course;
+import com.example.quanlytruonghoc.models.data.req.course.CourseReq;
+import com.example.quanlytruonghoc.models.data.res.CourseRes;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
+import org.mapstruct.ReportingPolicy;
+
+import java.util.List;
+
+@Mapper(
+        componentModel = "spring",
+        uses = UserMapper.class,
+        unmappedTargetPolicy = ReportingPolicy.IGNORE
+)
+public interface CourseMapper {
+    CourseRes toResponse(Course course);
+
+    List<CourseRes> toResponseList(List<Course> courses);
+
+    @Mapping(target = "courseId", ignore = true)
+    @Mapping(target = "teacher", ignore = true)
+    @Mapping(target = "status", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
+    Course toEntity(CourseReq request);
+
+    @Mapping(target = "courseId", ignore = true)
+    @Mapping(target = "teacher", ignore = true)
+    @Mapping(target = "status", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
+    void updateEntity(CourseReq request, @MappingTarget Course course);
+}

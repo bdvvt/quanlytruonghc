@@ -14,4 +14,20 @@ public class ApiResponse<T> {
     private T data;
     private Integer code;
 
+    public static <T> ApiResponse<T> success(String message, T data) {
+        return ApiResponse.<T>builder()
+                .message(message)
+                .code(200)
+                .data(data)
+                .build();
+    }
+
+    public static <T> ApiResponse<T> created(String message, T data) {
+        return ApiResponse.<T>builder()
+                .message(message)
+                .code(201)
+                .data(data)
+                .build();
+    }
+
 }

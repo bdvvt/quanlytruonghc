@@ -1,6 +1,6 @@
 package com.example.quanlytruonghoc.security.principal;
 
-import com.example.quanlytruonghoc.models.constants.UserStatus;
+import com.example.quanlytruonghoc.models.data.dto.constants.UserStatus;
 import com.example.quanlytruonghoc.models.data.entities.User;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

@@ -2,14 +2,16 @@ package com.example.quanlytruonghoc.models.services.impl;
 
 import com.example.quanlytruonghoc.exceptions.BadRequestException;
 import com.example.quanlytruonghoc.exceptions.NotFoundException;
-import com.example.quanlytruonghoc.models.constants.RoleName;
-import com.example.quanlytruonghoc.models.constants.UserStatus;
+import com.example.quanlytruonghoc.models.data.dto.constants.RoleName;
+import com.example.quanlytruonghoc.models.data.dto.constants.UserStatus;
 import com.example.quanlytruonghoc.models.data.entities.User;
-import com.example.quanlytruonghoc.models.data.req.UserPassReq;
-import com.example.quanlytruonghoc.models.data.req.UserReq;
-import com.example.quanlytruonghoc.models.data.req.UserStatusReq;
-import com.example.quanlytruonghoc.models.data.req.UserUpRoleReq;
-import com.example.quanlytruonghoc.models.mapper.UserMapper;
+
+import com.example.quanlytruonghoc.models.data.req.user.UserPassReq;
+import com.example.quanlytruonghoc.models.data.req.user.UserReq;
+import com.example.quanlytruonghoc.models.data.req.user.UserRoleReq;
+import com.example.quanlytruonghoc.models.data.req.user.UserStatusReq;
+import com.example.quanlytruonghoc.models.data.res.UserRes;
+import com.example.quanlytruonghoc.models.data.mapper.UserMapper;
 import com.example.quanlytruonghoc.models.repositories.IRoleRepository;
 import com.example.quanlytruonghoc.models.repositories.IUserRepository;
 import com.example.quanlytruonghoc.models.services.IUserService;
@@ -20,8 +22,9 @@ import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
-@Slf4j
+
 @Service
 @RequiredArgsConstructor
 public class UserServiceImpl implements IUserService {
@@ -31,7 +34,7 @@ public class UserServiceImpl implements IUserService {
     private final UserMapper userMapper;
 
     @Override
-    public User createUser(UserReq req) {
+    public UserRes createUser(UserReq req) {
         if (userRepository.findByEmail(req.getEmail()).isPresent()) {
             throw new RuntimeException("Email đã được sử dụng!");
         }
@@ -42,7 +45,7 @@ public class UserServiceImpl implements IUserService {
         user.setPassword(passwordEncoder.encode(req.getPassword()));
         user.setRoles(new HashSet<>(roleRepository.findAllById(req.getRoleIds())));
         user.setStatus(UserStatus.INACTIVE);
-        return userRepository.save(user);
+        return userMapper.toResponse(userRepository.save(user));
     }
 
     @Override
@@ -55,17 +58,19 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
-    public List<User> findAll(RoleName role, UserStatus status) {
-        return userRepository.findAllByRoleAndStatus(role, status);
+    public List<UserRes> findAll(RoleName role, UserStatus status) {
+       return userMapper.toResponseList(userRepository.findAllByRoleAndStatus(role,status));
     }
 
     @Override
-    public User findById(Long id) {
-        return userRepository.findById(id).orElseThrow(() -> new NotFoundException("Không tìm thấy người dùng với ID: " + id));
+    public UserRes findById(Long id) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy người dùng với ID: " + id));
+        return userMapper.toResponse(user);
     }
 
     @Override
-    public User updateUser(User currentUser,Long id, UserReq req) {
+    public UserRes updateUser(User currentUser,Long id, UserReq req) {
         User updateUser = userRepository.findById(id).orElseThrow(() -> new NotFoundException("Không tìm thấy người dùng với ID: " + id));
         userRepository.findByEmail(req.getEmail()).ifPresent(existingUser -> {
             if (!existingUser.getId().equals(id)) {
@@ -80,49 +85,50 @@ public class UserServiceImpl implements IUserService {
         if(updateUser.getRoles().stream().anyMatch(role -> role.getRoleName() == RoleName.ADMIN)){
             throw new RuntimeException("Không thể cập nhật thông tin của người dùng có quyền ADMIN!");
         }
-        boolean isAdmin = currentUser.getRoles().stream()
-                .anyMatch(role -> role.getRoleName() == RoleName.ADMIN);
+        boolean isAdminOrSuperAdmin = roleRepository.hasAnyRole(currentUser.getId(), Set.of(RoleName.ADMIN, RoleName.SUPER_ADMIN));
         boolean isOwner = updateUser.getId().equals(currentUser.getId());
-
-        if (!isAdmin && !isOwner) {
-            throw new BadRequestException("Bạn không có quyền chỉnh sửa thông tin người dùng này");
+        if (!isAdminOrSuperAdmin && !isOwner) {
+            throw new BadRequestException("Bạn không có quyền chỉnh sửa mật khẩu người dùng này");
         }
         userMapper.updateEntity(req, updateUser);
         updateUser.setRoles(new HashSet<>(roleRepository.findAllById(req.getRoleIds())));
         updateUser.setStatus(UserStatus.INACTIVE);
-        return userRepository.save(updateUser);
+        return userMapper.toResponse(userRepository.save(updateUser));
     }
 
     @Override
-    public User updateUserPassword(User currentUser, Long id, UserPassReq req) {
+    public UserRes updateUserPassword(User currentUser, Long id, UserPassReq req) {
         User updateUser = userRepository.findById(id).orElseThrow(() -> new NotFoundException("Không tìm thấy người dùng với ID: " + id));
-        boolean isAdmin = currentUser.getRoles().stream()
-                .anyMatch(role -> role.getRoleName() == RoleName.ADMIN);
+        boolean isAdminOrSuperAdmin = roleRepository.hasAnyRole(currentUser.getId(), Set.of(RoleName.ADMIN, RoleName.SUPER_ADMIN));
         boolean isOwner = updateUser.getId().equals(currentUser.getId());
-        if (!isAdmin && !isOwner) {
-            throw new BadRequestException("Bạn không có quyền chỉnh sửa mat khau người dùng này");
+        if (!isAdminOrSuperAdmin && !isOwner) {
+            throw new BadRequestException("Bạn không có quyền chỉnh sửa mật khẩu người dùng này");
         }
         updateUser.setPassword(passwordEncoder.encode(req.getPassword()));
-        return userRepository.save(updateUser);
+        return userMapper.toResponse(userRepository.save(updateUser));
     }
 
     @Override
-    public User updateUserRole(Long id, UserUpRoleReq req) {
+    public UserRes updateUserRole(User currentUser,Long id, UserRoleReq req) {
         User updateUser = userRepository.findById(id).orElseThrow(() -> new NotFoundException("Không tìm thấy người dùng với ID: " + id));
-        if(updateUser.getRoles().stream().anyMatch(role -> role.getRoleName() == RoleName.ADMIN)){
-            throw new RuntimeException("Không thể cập nhật thông tin của người dùng có quyền ADMIN!");
+        boolean isSuperAdmin = roleRepository.hasRole(currentUser.getId(),RoleName.SUPER_ADMIN);
+        boolean targetIsProtected = roleRepository.hasAnyRole(id, Set.of(RoleName.ADMIN, RoleName.SUPER_ADMIN));
+        if (targetIsProtected && !isSuperAdmin) {
+            throw new RuntimeException("Bạn không có quyền update người dùng này!");
         }
         updateUser.setRoles(new HashSet<>(roleRepository.findAllById(req.getRoleIds())));
-        return userRepository.save(updateUser);
+        return userMapper.toResponse(userRepository.save(updateUser));
     }
 
     @Override
-    public User updateUserStatus(Long id, UserStatusReq req) {
+    public UserRes updateUserStatus(User currentUser,Long id, UserStatusReq req) {
         User updateUser = userRepository.findById(id).orElseThrow(() -> new NotFoundException("Không tìm thấy người dùng với ID: " + id));
-        if(updateUser.getRoles().stream().anyMatch(role -> role.getRoleName() == RoleName.ADMIN)){
-            throw new RuntimeException("Không thể cập nhật thông tin của người dùng có quyền ADMIN!");
+        boolean isSuperAdmin = roleRepository.hasRole(currentUser.getId(),RoleName.SUPER_ADMIN);
+        boolean targetIsProtected = roleRepository.hasAnyRole(id, Set.of(RoleName.ADMIN, RoleName.SUPER_ADMIN));
+        if (targetIsProtected && !isSuperAdmin) {
+            throw new RuntimeException("Bạn không có quyền update người dùng này!");
         }
         updateUser.setStatus(req.getStatus());
-        return userRepository.save(updateUser);
+        return userMapper.toResponse(userRepository.save(updateUser));
     }
 }

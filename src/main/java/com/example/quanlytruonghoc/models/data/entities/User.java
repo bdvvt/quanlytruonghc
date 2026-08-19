@@ -1,7 +1,7 @@
 package com.example.quanlytruonghoc.models.data.entities;
 
 
-import com.example.quanlytruonghoc.models.constants.UserStatus;
+import com.example.quanlytruonghoc.models.data.dto.constants.UserStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -71,4 +71,12 @@ public class User {
 
     @Column(name = "otp_expiration")
     private LocalDateTime otpExpiration;
+
+    @ManyToOne
+    @JoinColumn(name = "department_id")
+    private Department department;
+
+    @ManyToOne
+    @JoinColumn(name = "school_id")
+    private School school;
 }
