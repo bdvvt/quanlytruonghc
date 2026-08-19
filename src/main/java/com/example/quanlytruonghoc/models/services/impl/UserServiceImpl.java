@@ -38,8 +38,6 @@ public class UserServiceImpl implements IUserService {
         if (userRepository.findByUsername(req.getUsername()).isPresent()) {
             throw new RuntimeException("Tên đăng nhập đã được sử dụng!");
         }
-
-        log.info("Saving new User entity to database for username: {}", req.getUsername());
         User user = userMapper.toEntity(req);
         user.setPassword(passwordEncoder.encode(req.getPassword()));
         user.setRoles(new HashSet<>(roleRepository.findAllById(req.getRoleIds())));
@@ -49,7 +47,6 @@ public class UserServiceImpl implements IUserService {
 
     @Override
     public void deleteUser(Long id) {
-        log.info("Deleting user record with ID: {}", id);
         User deleteUser = userRepository.findById(id).orElseThrow(() -> new NotFoundException("Không tìm thấy người dùng với ID: " + id));
         if(deleteUser.getRoles().stream().anyMatch(role -> role.getRoleName() == RoleName.ADMIN)){
             throw new RuntimeException("Không thể xóa người dùng có quyền ADMIN!");
@@ -59,13 +56,11 @@ public class UserServiceImpl implements IUserService {
 
     @Override
     public List<User> findAll(RoleName role, UserStatus status) {
-        log.info("Fetching users with role: {} and status: {}", role, status);
         return userRepository.findAllByRoleAndStatus(role, status);
     }
 
     @Override
     public User findById(Long id) {
-        log.info("Fetching user with ID: {}", id);
         return userRepository.findById(id).orElseThrow(() -> new NotFoundException("Không tìm thấy người dùng với ID: " + id));
     }
 
@@ -92,7 +87,6 @@ public class UserServiceImpl implements IUserService {
         if (!isAdmin && !isOwner) {
             throw new BadRequestException("Bạn không có quyền chỉnh sửa thông tin người dùng này");
         }
-        log.info("Updating user record with ID: {}", id);
         userMapper.updateEntity(req, updateUser);
         updateUser.setRoles(new HashSet<>(roleRepository.findAllById(req.getRoleIds())));
         updateUser.setStatus(UserStatus.INACTIVE);
@@ -101,7 +95,6 @@ public class UserServiceImpl implements IUserService {
 
     @Override
     public User updateUserPassword(User currentUser, Long id, UserPassReq req) {
-        log.info("Updating password for user ID: {}", id);
         User updateUser = userRepository.findById(id).orElseThrow(() -> new NotFoundException("Không tìm thấy người dùng với ID: " + id));
         boolean isAdmin = currentUser.getRoles().stream()
                 .anyMatch(role -> role.getRoleName() == RoleName.ADMIN);
@@ -119,7 +112,6 @@ public class UserServiceImpl implements IUserService {
         if(updateUser.getRoles().stream().anyMatch(role -> role.getRoleName() == RoleName.ADMIN)){
             throw new RuntimeException("Không thể cập nhật thông tin của người dùng có quyền ADMIN!");
         }
-        log.info("Updating user role for ID: {}", id);
         updateUser.setRoles(new HashSet<>(roleRepository.findAllById(req.getRoleIds())));
         return userRepository.save(updateUser);
     }
@@ -130,7 +122,6 @@ public class UserServiceImpl implements IUserService {
         if(updateUser.getRoles().stream().anyMatch(role -> role.getRoleName() == RoleName.ADMIN)){
             throw new RuntimeException("Không thể cập nhật thông tin của người dùng có quyền ADMIN!");
         }
-        log.info("Updating user status for ID: {} to {}", id, req.getStatus());
         updateUser.setStatus(req.getStatus());
         return userRepository.save(updateUser);
     }

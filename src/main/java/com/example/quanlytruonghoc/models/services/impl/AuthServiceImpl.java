@@ -38,7 +38,6 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class AuthServiceImpl implements IAuthService {
     private final IUserRepository userRepository;
     private final IRoleRepository roleRepository;
