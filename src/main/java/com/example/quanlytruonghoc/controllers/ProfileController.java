@@ -1,7 +1,7 @@
 package com.example.quanlytruonghoc.controllers;
 
-import com.example.duanlon2.models.services.IUserService;
-import com.example.duanlon2.security.principal.CustomUserDetails;
+import com.example.quanlytruonghoc.models.services.IUserService;
+import com.example.quanlytruonghoc.security.principal.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;

@@ -1,24 +1,22 @@
 package com.example.quanlytruonghoc.controllers;
 
-import com.example.duanlon2.models.constants.RoleName;
-import com.example.duanlon2.models.constants.UserStatus;
-import com.example.duanlon2.models.dto.req.UserPassReq;
-import com.example.duanlon2.models.dto.req.UserReq;
-import com.example.duanlon2.models.dto.req.UserStatusReq;
-import com.example.duanlon2.models.dto.req.UserUpRoleReq;
-import com.example.duanlon2.models.dto.wrapper.ApiResponse;
-import com.example.duanlon2.models.entities.User;
-import com.example.duanlon2.models.services.IUserService;
-import com.example.duanlon2.security.principal.CustomUserDetails;
+import com.example.quanlytruonghoc.models.constants.RoleName;
+import com.example.quanlytruonghoc.models.constants.UserStatus;
+import com.example.quanlytruonghoc.models.data.dto.wrapper.ApiResponse;
+import com.example.quanlytruonghoc.models.data.entities.User;
+import com.example.quanlytruonghoc.models.data.req.UserPassReq;
+import com.example.quanlytruonghoc.models.data.req.UserReq;
+import com.example.quanlytruonghoc.models.data.req.UserStatusReq;
+import com.example.quanlytruonghoc.models.data.req.UserUpRoleReq;
+import com.example.quanlytruonghoc.models.services.IUserService;
+import com.example.quanlytruonghoc.security.principal.CustomUserDetails;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-@Slf4j
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
@@ -27,10 +25,9 @@ public class UserController {
 
     @PostMapping
     public ResponseEntity<?> addNewUser(@Valid @ModelAttribute UserReq req) {
-        log.info("Received request to add new user: {}", req);
         return ResponseEntity.status(201).body(
                 ApiResponse.builder()
-                        .message("Add New User Successfully")
+                        .message("Tạo mới người dùng thành công")
                         .code(201)
                         .data(userService.createUser(req))
                         .build()
@@ -38,12 +35,11 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateUser(@AuthenticationPrincipal CustomUserDetails userDetails, @PathVariable Long id, @Valid @ModelAttribute  UserReq req){
+    public ResponseEntity<?> updateUser(@AuthenticationPrincipal CustomUserDetails userDetails, @PathVariable Long id, @Valid @ModelAttribute UserReq req){
         User currentUser = userDetails.getUser();
-        log.info("Updating user with ID: {}", id);
         return ResponseEntity.status(200).body(
                 ApiResponse.builder()
-                        .message("Updated User Successfully")
+                        .message("Cập nhật người dùng thành công")
                         .code(200)
                         .data(userService.updateUser(currentUser, id,req))
                         .build()
@@ -53,10 +49,9 @@ public class UserController {
     @PutMapping("/{id}/password")
     public ResponseEntity<?> updateUserPassword(@AuthenticationPrincipal CustomUserDetails customUserDetails, @PathVariable Long id, @Valid @ModelAttribute UserPassReq req) {
         User currentUser = customUserDetails.getUser();
-        log.info("Updating user password with ID: {}", id);
         return ResponseEntity.status(200).body(
                 ApiResponse.builder()
-                        .message("Updated User Password Successfully")
+                        .message("Cập nhật mật khẩu người dùng thành công")
                         .code(200)
                         .data(userService.updateUserPassword(currentUser,id, req))
                         .build()
@@ -65,10 +60,9 @@ public class UserController {
 
     @GetMapping("/{id}")
     public ResponseEntity<?> findById(@PathVariable Long id) {
-        log.info("Fetching user with ID: {}", id);
         return ResponseEntity.ok(
                 ApiResponse.builder()
-                        .message("Get User Successfully")
+                        .message("Lấy " + id + " người dùng thành công")
                         .code(200)
                         .data(userService.findById(id))
                         .build()
@@ -77,11 +71,10 @@ public class UserController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> dropout(@PathVariable Long id){
-        log.info("Deleted user with ID: {}", id);
         userService.deleteUser(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).body(
                 ApiResponse.builder()
-                        .message("Deleted User Successfully")
+                        .message("Xóa người dùng thành công")
                         .code(204)
                         .data(null)
                         .build()
@@ -91,10 +84,9 @@ public class UserController {
     @GetMapping
     public ResponseEntity<?> findAll(@RequestParam(value = "role", required = false) RoleName role,
                                      @RequestParam(value = "status", required = false) UserStatus status) {
-        log.info("Fetching all users");
         return ResponseEntity.ok(
                 ApiResponse.builder()
-                        .message("Get User Successfully")
+                        .message("Lấy người dùng thành công")
                         .code(200)
                         .data(userService.findAll(role, status))
                         .build()
@@ -103,10 +95,9 @@ public class UserController {
 
     @PutMapping("/{id}/role")
     public ResponseEntity<?> updateUserRole(@PathVariable Long id, @Valid @ModelAttribute UserUpRoleReq req){
-        log.info("Updating user role with ID: {}", id);
         return ResponseEntity.status(200).body(
                 ApiResponse.builder()
-                        .message("Updated User Successfully")
+                        .message("cập nhật role người dùng thành công")
                         .code(200)
                         .data(userService.updateUserRole(id,req))
                         .build()
@@ -115,10 +106,9 @@ public class UserController {
 
     @PutMapping("/{id}/status")
     public ResponseEntity<?> updateUserStatus(@PathVariable Long id, @Valid @ModelAttribute UserStatusReq req) {
-        log.info("Updating status for user ID: {}", id);
         return ResponseEntity.ok(
                 ApiResponse.builder()
-                        .message("Updated User Status Successfully")
+                        .message("cập nhật trạng thái người dùng thành công")
                         .code(200)
                         .data(userService.updateUserStatus(id, req))
                         .build()
