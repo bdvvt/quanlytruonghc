@@ -67,6 +67,8 @@ public class SecurityConfig {
                          .requestMatchers(HttpMethod.GET,"/api/users/**").hasAnyAuthority("ADMIN","SUPER_ADMIN")
                          .requestMatchers(HttpMethod.POST,"/api/users/**").hasAnyAuthority("ADMIN","SUPER_ADMIN")
                          .requestMatchers(HttpMethod.DELETE,"/api/users/**").hasAnyAuthority("ADMIN","SUPER_ADMIN")
+                         .requestMatchers(HttpMethod.POST, "/api/schools/**").authenticated()
+                         .requestMatchers(HttpMethod.PUT, "/api/schools/**").hasAuthority("ADMIN")
                          .requestMatchers("/api/reports/**").hasAuthority("ADMIN")
                          .requestMatchers(HttpMethod.POST, "/api/courses").hasAuthority("ADMIN")
                          .requestMatchers(HttpMethod.POST, "/api/courses/*/lessons").hasAnyAuthority("ADMIN","TEACHER")

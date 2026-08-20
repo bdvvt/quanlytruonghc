@@ -11,8 +11,8 @@ import com.example.quanlytruonghoc.models.data.res.UserRes;
 import java.util.List;
 
 public interface ISchoolService {
-    SchoolRes createSchool(SchoolReq req);
+    SchoolRes createSchool(User currentUser,SchoolReq req);
     SchoolRes updateSchool(User currentUser, Long id, SchoolReq req);
-    void deleteUser(Long id);
+    void deleteSchool(User currentUser,Long id);
     List<SchoolRes> findAll();
 }

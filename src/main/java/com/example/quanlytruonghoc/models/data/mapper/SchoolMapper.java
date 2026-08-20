@@ -21,7 +21,7 @@ import java.util.List;
 public interface SchoolMapper {
     SchoolRes toResponse(School school);
 
-    List<SchoolReq> toResponseList(List<School> schools);
+    List<SchoolRes> toResponseList(List<School> schools);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "departments", ignore = true)

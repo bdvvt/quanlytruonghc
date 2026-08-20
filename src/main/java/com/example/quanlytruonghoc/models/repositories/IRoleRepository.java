@@ -33,5 +33,13 @@ public interface IRoleRepository extends JpaRepository<Role,Long> {
           AND r.roleName IN :roleNames
         """)
     boolean hasAnyRole(@Param("userId") Long userId,@Param("roleNames") Set<RoleName> roleNames);
+
+    @Query("""
+        SELECT r.roleName
+        FROM User u
+        JOIN u.roles r
+        WHERE u.id = :userId
+        """)
+    Set<RoleName> findRoleNamesByUserId(@Param("userId") Long userId);
 }
 

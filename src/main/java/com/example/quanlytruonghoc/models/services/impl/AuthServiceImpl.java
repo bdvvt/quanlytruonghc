@@ -82,7 +82,7 @@ public class AuthServiceImpl implements IAuthService {
     public void register(RegisterReq req) {
         Set<Role> roles = new HashSet<>();
         roles.add(
-                roleRepository.findByRoleName(RoleName.STUDENT)
+                roleRepository.findByRoleName(RoleName.USER)
                         .orElseThrow(() -> new NotFoundException("Role not found"))
         );
         String otp = String.valueOf((int) ((Math.random() * 900000) + 100000));
