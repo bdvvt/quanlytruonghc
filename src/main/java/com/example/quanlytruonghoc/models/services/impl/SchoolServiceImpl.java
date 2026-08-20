@@ -11,8 +11,8 @@ import com.example.quanlytruonghoc.models.data.req.school.SchoolReq;
 import com.example.quanlytruonghoc.models.data.res.SchoolRes;
 import com.example.quanlytruonghoc.models.repositories.IRoleRepository;
 import com.example.quanlytruonghoc.models.repositories.ISchoolRepository;
-import com.example.quanlytruonghoc.models.repositories.IUserRepository;
 import com.example.quanlytruonghoc.models.services.ISchoolService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -25,59 +25,74 @@ import java.util.Set;
 public class SchoolServiceImpl implements ISchoolService {
     private final IRoleRepository roleRepository;
     private final ISchoolRepository schoolRepository;
-    private final IUserRepository userRepository;
     private final SchoolMapper schoolMapper;
 
     @Override
-    public SchoolRes createSchool(User currentUser,SchoolReq req) {
-        if (currentUser.getSchool() != null) {
-            throw new BadRequestException("Bạn không tạo được trường mới");
-        }
+    @Transactional
+    public SchoolRes createSchool(User currentUser, SchoolReq req) {
+        validateCanCreateSchool(currentUser);
+
+        Role adminRole = roleRepository.findByRoleName(RoleName.ADMIN)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy role ADMIN"));
+
         School school = schoolMapper.toEntity(req);
         school.setCreatedBy(currentUser);
-        School savedSchool = schoolRepository.save(school);
+        school = schoolRepository.save(school);
 
-        currentUser.setSchool(savedSchool);
-        HashSet<Role> roles = new HashSet<>(currentUser.getRoles());
+        currentUser.setSchool(school);
+        Set<Role> roles = new HashSet<>(currentUser.getRoles());
         roles.removeIf(role -> role.getRoleName() == RoleName.USER);
-        roles.add(
-                roleRepository.findByRoleName(RoleName.ADMIN)
-                        .orElseThrow(() -> new NotFoundException("Không tìm thấy role "))
-        );
+        roles.add(adminRole);
         currentUser.setRoles(roles);
-        userRepository.save(currentUser);
 
-        return schoolMapper.toResponse(savedSchool);
+        return schoolMapper.toResponse(school);
+    }
+
+    private void validateCanCreateSchool(User currentUser) {
+        if (currentUser == null) {
+            throw new BadRequestException("Người dùng không hợp lệ");
+        }
+
+        if (currentUser.getSchool() != null) {
+            throw new BadRequestException("Bạn đã thuộc một trường và không thể tạo trường mới");
+        }
     }
 
     @Override
+    @Transactional
     public SchoolRes updateSchool(User currentUser, Long id, SchoolReq req) {
-        School school = schoolRepository.findById(id).orElseThrow(() -> new NotFoundException("Không tìm thấy trường với ID: " + id));
+        School school = schoolRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy trường với ID: " + id));
+
         Set<RoleName> roleNames = roleRepository.findRoleNamesByUserId(currentUser.getId());
         boolean isSuperAdmin = roleNames.contains(RoleName.SUPER_ADMIN);
-        boolean isAdmin = roleNames.contains(RoleName.ADMIN);
-        boolean isAdminOfThisSchool = isAdmin
+        boolean isAdminOfThisSchool = roleNames.contains(RoleName.ADMIN)
                 && currentUser.getSchool() != null
                 && currentUser.getSchool().getId().equals(school.getId());
 
         if (!isSuperAdmin && !isAdminOfThisSchool) {
             throw new BadRequestException("Bạn không có quyền cập nhật trường này");
         }
+
         schoolMapper.updateEntity(req, school);
         return schoolMapper.toResponse(schoolRepository.save(school));
     }
 
     @Override
-    public void deleteSchool(User currentUser,Long id) {
-        School school = schoolRepository.findById(id).orElseThrow(() -> new NotFoundException("Không tìm thấy trường với ID: " + id));
+    @Transactional
+    public void deleteSchool(User currentUser, Long id) {
+        School school = schoolRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Không tìm thấy trường với ID: " + id));
+
         boolean isSuperAdmin = roleRepository.hasRole(currentUser.getId(), RoleName.SUPER_ADMIN);
-        boolean isAdmin = roleRepository.hasRole(currentUser.getId(), RoleName.ADMIN);
-        boolean isAdminOfThisSchool = isAdmin
+        boolean isAdminOfThisSchool = roleRepository.hasRole(currentUser.getId(), RoleName.ADMIN)
                 && currentUser.getSchool() != null
                 && currentUser.getSchool().getId().equals(school.getId());
+
         if (!isSuperAdmin && !isAdminOfThisSchool) {
-            throw new BadRequestException("Bạn không có quyền cập nhật trường này");
+            throw new BadRequestException("Bạn không có quyền xóa trường này");
         }
+
         schoolRepository.delete(school);
     }
 
