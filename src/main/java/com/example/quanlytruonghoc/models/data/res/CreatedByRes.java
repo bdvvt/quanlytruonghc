@@ -9,12 +9,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class SchoolRes {
+public class CreatedByRes {
     private Long id;
-    private String name;
-    private String description;
-    private String address;
-    private String phone;
-    private String email;
-    private CreatedByRes createdBy;
+    private String username;
+    private String fullName;
 }

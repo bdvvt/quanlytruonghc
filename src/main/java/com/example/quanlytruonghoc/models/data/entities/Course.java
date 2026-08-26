@@ -39,6 +39,10 @@ public class Course {
     @JoinColumn(name = "department_id")
     private Department department;
 
+    @ManyToOne
+    @JoinColumn(name = "school_id")
+    private School school;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
     private CourseStatus status = CourseStatus.DRAFT;

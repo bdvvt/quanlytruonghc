@@ -8,11 +8,15 @@ import com.example.quanlytruonghoc.models.data.req.user.UserPassReq;
 import com.example.quanlytruonghoc.models.data.req.user.UserReq;
 import com.example.quanlytruonghoc.models.data.req.user.UserStatusReq;
 import com.example.quanlytruonghoc.models.data.req.user.UserRoleReq;
+import com.example.quanlytruonghoc.models.data.res.PageResponse;
 import com.example.quanlytruonghoc.models.data.res.UserRes;
 import com.example.quanlytruonghoc.models.services.IUserService;
 import com.example.quanlytruonghoc.security.principal.CustomUserDetails;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -26,10 +30,11 @@ public class UserController {
     private final IUserService userService;
 
     @PostMapping
-    public ApiResponse<UserRes> addNewUser(@Valid @ModelAttribute UserReq req) {
+    public ApiResponse<UserRes> addNewUser(@AuthenticationPrincipal CustomUserDetails userDetails,@Valid @ModelAttribute UserReq req) {
+        User currentUser = userDetails.getUser();
         return ApiResponse.created(
                 "Tạo mới người dùng thành công",
-                userService.createUser(req)
+                userService.createUser(currentUser,req)
         );
     }
 
@@ -66,11 +71,21 @@ public class UserController {
     }
 
     @GetMapping
-    public ApiResponse<List<UserRes>> findAll(@RequestParam(value = "role", required = false) RoleName role,
-                                              @RequestParam(value = "status", required = false) UserStatus status) {
+    public ApiResponse<PageResponse<UserRes>> findAll(
+            @PageableDefault(
+                    page = 0,
+                    size = 5,
+                    sort = "title",
+                    direction = Sort.Direction.ASC
+            ) Pageable pageable,
+            @RequestParam(value = "role", required = false) RoleName role,
+            @RequestParam(value = "status", required = false) UserStatus status,
+            @AuthenticationPrincipal CustomUserDetails customUserDetails
+    ) {
+        User currentUser = customUserDetails.getUser();
         return ApiResponse.success(
                 "Lấy người dùng thành công",
-                userService.findAll(role, status)
+                userService.findAll(pageable,currentUser,role, status)
         );
     }
 

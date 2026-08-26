@@ -17,24 +17,6 @@ public interface IRoleRepository extends JpaRepository<Role,Long> {
     boolean existsByRoleName(RoleName name);
 
     @Query("""
-        SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END
-        FROM User u
-        JOIN u.roles r
-        WHERE u.id = :userId
-          AND r.roleName = :roleName
-        """)
-    boolean hasRole(@Param("userId") Long userId,@Param("roleName") RoleName roleName);
-
-    @Query("""
-        SELECT CASE WHEN COUNT(u) > 0 THEN true ELSE false END
-        FROM User u
-        JOIN u.roles r
-        WHERE u.id = :userId
-          AND r.roleName IN :roleNames
-        """)
-    boolean hasAnyRole(@Param("userId") Long userId,@Param("roleNames") Set<RoleName> roleNames);
-
-    @Query("""
         SELECT r.roleName
         FROM User u
         JOIN u.roles r

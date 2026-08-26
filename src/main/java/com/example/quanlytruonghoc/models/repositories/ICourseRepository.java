@@ -1,6 +1,8 @@
 package com.example.quanlytruonghoc.models.repositories;
 
 import com.example.quanlytruonghoc.models.data.entities.Course;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -12,5 +14,5 @@ import java.util.List;
 @Repository
 public interface ICourseRepository extends JpaRepository<Course,Long> {
     @Query("SELECT c FROM Course c WHERE c.title LIKE concat('%',:search,'%') OR c.description LIKE concat('%',:search,'%')")
-    List<Course> findAllBySearch(@Param("search") String search);
+    Page<Course> findAllBySearch(@Param("search") String search, Pageable pageable );
 }

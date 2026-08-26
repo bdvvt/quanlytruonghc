@@ -20,6 +20,7 @@ public class UserRes {
     private String email;
     private String fullName;
     private Set<RoleRes> roles;
+    private SchoolRes school;
     private String phone;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

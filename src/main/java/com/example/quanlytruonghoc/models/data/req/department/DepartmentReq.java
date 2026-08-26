@@ -19,6 +19,4 @@ public class DepartmentReq {
 
     private String description;
 
-    @NotNull(message = "ID trường không được để trống")
-    private Long schoolId;
 }

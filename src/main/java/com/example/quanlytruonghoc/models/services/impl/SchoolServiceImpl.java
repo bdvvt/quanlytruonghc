@@ -8,12 +8,14 @@ import com.example.quanlytruonghoc.models.data.entities.School;
 import com.example.quanlytruonghoc.models.data.entities.User;
 import com.example.quanlytruonghoc.models.data.mapper.SchoolMapper;
 import com.example.quanlytruonghoc.models.data.req.school.SchoolReq;
+import com.example.quanlytruonghoc.models.data.res.PageResponse;
 import com.example.quanlytruonghoc.models.data.res.SchoolRes;
 import com.example.quanlytruonghoc.models.repositories.IRoleRepository;
 import com.example.quanlytruonghoc.models.repositories.ISchoolRepository;
 import com.example.quanlytruonghoc.models.repositories.IUserRepository;
 import com.example.quanlytruonghoc.models.services.ISchoolService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
@@ -35,10 +37,10 @@ public class SchoolServiceImpl implements ISchoolService {
         }
         School school = schoolMapper.toEntity(req);
         school.setCreatedBy(currentUser);
-        School savedSchool = schoolRepository.save(school);
+        school = schoolRepository.save(school);
 
-        currentUser.setSchool(savedSchool);
-        HashSet<Role> roles = new HashSet<>(currentUser.getRoles());
+        currentUser.setSchool(school);
+        Set<Role> roles = new HashSet<>(currentUser.getRoles());
         roles.removeIf(role -> role.getRoleName() == RoleName.USER);
         roles.add(
                 roleRepository.findByRoleName(RoleName.ADMIN)
@@ -47,7 +49,7 @@ public class SchoolServiceImpl implements ISchoolService {
         currentUser.setRoles(roles);
         userRepository.save(currentUser);
 
-        return schoolMapper.toResponse(savedSchool);
+        return schoolMapper.toResponse(school);
     }
 
     @Override
@@ -70,19 +72,20 @@ public class SchoolServiceImpl implements ISchoolService {
     @Override
     public void deleteSchool(User currentUser,Long id) {
         School school = schoolRepository.findById(id).orElseThrow(() -> new NotFoundException("Không tìm thấy trường với ID: " + id));
-        boolean isSuperAdmin = roleRepository.hasRole(currentUser.getId(), RoleName.SUPER_ADMIN);
-        boolean isAdmin = roleRepository.hasRole(currentUser.getId(), RoleName.ADMIN);
+        Set<RoleName> roleNames = roleRepository.findRoleNamesByUserId(currentUser.getId());
+        boolean isSuperAdmin = roleNames.contains(RoleName.SUPER_ADMIN);
+        boolean isAdmin = roleNames.contains(RoleName.ADMIN);
         boolean isAdminOfThisSchool = isAdmin
                 && currentUser.getSchool() != null
                 && currentUser.getSchool().getId().equals(school.getId());
         if (!isSuperAdmin && !isAdminOfThisSchool) {
-            throw new BadRequestException("Bạn không có quyền cập nhật trường này");
+            throw new BadRequestException("Bạn không có quyền xóa trường này");
         }
         schoolRepository.delete(school);
     }
 
     @Override
-    public List<SchoolRes> findAll() {
-        return schoolMapper.toResponseList(schoolRepository.findAll());
+    public PageResponse<SchoolRes> findAll(Pageable pageable) {
+        return schoolMapper.toPageResponse(schoolRepository.findAll(pageable));
     }
 }

@@ -1,12 +1,16 @@
 package com.example.quanlytruonghoc.models.data.mapper;
 
 import com.example.quanlytruonghoc.models.data.entities.Department;
+import com.example.quanlytruonghoc.models.data.entities.School;
 import com.example.quanlytruonghoc.models.data.req.department.DepartmentReq;
 import com.example.quanlytruonghoc.models.data.res.DepartmentRes;
+import com.example.quanlytruonghoc.models.data.res.PageResponse;
+import com.example.quanlytruonghoc.models.data.res.SchoolRes;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.ReportingPolicy;
+import org.springframework.data.domain.Page;
 
 import java.util.List;
 
@@ -29,4 +33,16 @@ public interface DepartmentMapper {
     @Mapping(target = "school", ignore = true)
     @Mapping(target = "createdBy", ignore = true)
     void updateEntity(DepartmentReq request, @MappingTarget Department department);
+
+    default PageResponse<DepartmentRes> toPageResponse(Page<Department> page) {
+        if (page == null) return null;
+        return PageResponse.<DepartmentRes>builder()
+                .items(toResponseList(page.getContent()))
+                .page(page.getNumber())
+                .size(page.getSize())
+                .totalItems(page.getTotalElements())
+                .totalPages(page.getTotalPages())
+                .last(page.isLast())
+                .build();
+    }
 }
