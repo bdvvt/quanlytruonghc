@@ -124,11 +124,11 @@ public class AuthServiceImpl implements IAuthService {
             userRepository.save(user);
             mailService.sendOtpMail(user.getEmail(), newOtp);
 
-            throw new RuntimeException("Mã OTP đã hết hạn! Hệ thống đã tự động gửi mã OTP mới về email của bạn.");
+            throw new AuthException("Mã OTP đã hết hạn! Hệ thống đã tự động gửi mã OTP mới về email của bạn.");
         }
 
         if (user.getOtpCode() == null || !user.getOtpCode().equals(req.getOtp())) {
-            throw new RuntimeException("Mã OTP không chính xác");
+            throw new AuthException("Mã OTP không chính xác");
         }
         user.setStatus(UserStatus.ACTIVE);
         user.setOtpCode(null);

@@ -1,5 +1,6 @@
 package com.example.quanlytruonghoc.models.data.mapper;
 
+import com.example.quanlytruonghoc.exceptions.NotFoundException;
 import com.example.quanlytruonghoc.models.data.entities.User;
 import com.example.quanlytruonghoc.models.data.req.auth.RegisterReq;
 import com.example.quanlytruonghoc.models.data.req.user.UserReq;
@@ -53,7 +54,7 @@ public interface UserMapper {
     void updateEntity(UserReq request, @MappingTarget User user);
 
     default PageResponse<UserRes> toPageResponse(Page<User> page) {
-        if (page == null) return null;
+        if (page == null) throw new NotFoundException("Không tìm thấy dữ liệu người dùng");
         return PageResponse.<UserRes>builder()
                 .items(toResponseList(page.getContent()))
                 .page(page.getNumber())

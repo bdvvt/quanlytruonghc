@@ -75,7 +75,7 @@ public class UserController {
             @PageableDefault(
                     page = 0,
                     size = 5,
-                    sort = "title",
+                    sort = "fullName",
                     direction = Sort.Direction.ASC
             ) Pageable pageable,
             @RequestParam(value = "role", required = false) RoleName role,

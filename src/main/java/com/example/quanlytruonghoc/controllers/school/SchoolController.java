@@ -54,7 +54,7 @@ public class SchoolController {
             @PageableDefault(
                     page = 0,
                     size = 5,
-                    sort = "title",
+                    sort = "name",
                     direction = Sort.Direction.ASC
             ) Pageable pageable) {
         return ApiResponse.success(

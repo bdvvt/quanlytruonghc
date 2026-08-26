@@ -1,6 +1,7 @@
 package com.example.quanlytruonghoc.models.services.impl;
 
 import com.example.quanlytruonghoc.exceptions.BadRequestException;
+import com.example.quanlytruonghoc.exceptions.DataConflictException;
 import com.example.quanlytruonghoc.exceptions.NotFoundException;
 import com.example.quanlytruonghoc.models.data.dto.constants.RoleName;
 import com.example.quanlytruonghoc.models.data.dto.constants.UserStatus;
@@ -40,10 +41,10 @@ public class UserServiceImpl implements IUserService {
     @Override
     public UserRes createUser(User currentUser,UserReq req) {
         if (userRepository.findByEmail(req.getEmail()).isPresent()) {
-            throw new RuntimeException("Email đã được sử dụng!");
+            throw new DataConflictException("Email đã được sử dụng!");
         }
         if (userRepository.findByUsername(req.getUsername()).isPresent()) {
-            throw new RuntimeException("Tên đăng nhập đã được sử dụng!");
+            throw new DataConflictException("Tên đăng nhập đã được sử dụng!");
         }
         Set<RoleName> currentUserRoles = roleRepository.findRoleNamesByUserId(currentUser.getId());
         boolean isSuperAdmin = currentUserRoles.contains(RoleName.SUPER_ADMIN);
@@ -71,7 +72,7 @@ public class UserServiceImpl implements IUserService {
     public void deleteUser(Long id) {
         User deleteUser = userRepository.findById(id).orElseThrow(() -> new NotFoundException("Không tìm thấy người dùng với ID: " + id));
         if(deleteUser.getRoles().stream().anyMatch(role -> role.getRoleName() == RoleName.ADMIN)){
-            throw new RuntimeException("Không thể xóa người dùng có quyền ADMIN!");
+            throw new BadRequestException("Không thể xóa người dùng có quyền ADMIN!");
         }
         userRepository.delete(deleteUser);
     }
@@ -82,13 +83,16 @@ public class UserServiceImpl implements IUserService {
         boolean isSuperAdmin = currentUserRoles.contains(RoleName.SUPER_ADMIN);
         boolean isAdmin = currentUserRoles.contains(RoleName.ADMIN);
         if (isAdmin && !isSuperAdmin) {
+            if (currentUser.getSchool() == null) {
+                throw new NotFoundException("Không tìm thấy trường được gán cho người dùng hiện tại");
+            }
             Long school = currentUser.getSchool().getId();
             return userMapper.toPageResponse(userRepository.findAllBySchoolIdAndRoleAndStatus(school, role,status,pageable));
 
         }  if (isSuperAdmin) {
             return userMapper.toPageResponse(userRepository.findAllByRoleAndStatus(role,status,pageable));
         }
-        return null;
+        throw new NotFoundException("Không tìm thấy dữ liệu người dùng phù hợp với quyền hiện tại");
     }
 
     @Override
@@ -103,19 +107,19 @@ public class UserServiceImpl implements IUserService {
         User updateUser = userRepository.findById(id).orElseThrow(() -> new NotFoundException("Không tìm thấy người dùng với ID: " + id));
         userRepository.findByEmail(req.getEmail()).ifPresent(existingUser -> {
             if (!existingUser.getId().equals(id)) {
-                throw new RuntimeException("Email đã được sử dụng bởi tài khoản khác!");
+                throw new DataConflictException("Email đã được sử dụng bởi tài khoản khác!");
             }
         });
         userRepository.findByUsername(req.getUsername()).ifPresent(existingUser -> {
             if (!existingUser.getId().equals(id)) {
-                throw new RuntimeException("Tên đăng nhập đã được sử dụng bởi tài khoản khác!");
+                throw new DataConflictException("Tên đăng nhập đã được sử dụng bởi tài khoản khác!");
             }
         });
         Set<RoleName> roleNames = roleRepository.findRoleNamesByUserId(currentUser.getId());
         boolean isSuperAdmin = roleNames.contains(RoleName.SUPER_ADMIN);
         boolean isAdmin = roleNames.contains(RoleName.ADMIN);
         boolean isOwner = updateUser.getId().equals(currentUser.getId());
-        boolean targetIsAdmin = roleNames.contains(RoleName.ADMIN);
+        boolean targetIsAdmin = roleRepository.findRoleNamesByUserId(updateUser.getId()).contains(RoleName.ADMIN);
         if (targetIsAdmin) {
             throw new BadRequestException("Không thể cập nhật thông tin của người dùng có quyền ADMIN!");
         }

@@ -2,6 +2,7 @@ package com.example.quanlytruonghoc.models.services.uploads;
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
+import com.example.quanlytruonghoc.exceptions.BadRequestException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -17,7 +18,7 @@ public class UploadService {
 
     public String upload(MultipartFile file) {
         if (file == null || file.isEmpty()) {
-            return null;
+            throw new BadRequestException("Tệp tải lên không được để trống");
         }
         try {
             String originalFilename = file.getOriginalFilename();
@@ -34,7 +35,7 @@ public class UploadService {
             Map uploadResult = cloudinary.uploader().upload(file.getBytes(),uploadParams);
             return uploadResult.get("url").toString();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new BadRequestException("Không thể đọc tệp tải lên");
         }
     }
 }

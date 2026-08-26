@@ -1,5 +1,6 @@
 package com.example.quanlytruonghoc.models.data.mapper;
 
+import com.example.quanlytruonghoc.exceptions.NotFoundException;
 import com.example.quanlytruonghoc.models.data.entities.Department;
 import com.example.quanlytruonghoc.models.data.entities.School;
 import com.example.quanlytruonghoc.models.data.req.department.DepartmentReq;
@@ -35,7 +36,7 @@ public interface DepartmentMapper {
     void updateEntity(DepartmentReq request, @MappingTarget Department department);
 
     default PageResponse<DepartmentRes> toPageResponse(Page<Department> page) {
-        if (page == null) return null;
+        if (page == null) throw new NotFoundException("Không tìm thấy dữ liệu phòng ban");
         return PageResponse.<DepartmentRes>builder()
                 .items(toResponseList(page.getContent()))
                 .page(page.getNumber())

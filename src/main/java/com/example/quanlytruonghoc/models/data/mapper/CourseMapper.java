@@ -1,5 +1,6 @@
 package com.example.quanlytruonghoc.models.data.mapper;
 
+import com.example.quanlytruonghoc.exceptions.NotFoundException;
 import com.example.quanlytruonghoc.models.data.entities.Course;
 import com.example.quanlytruonghoc.models.data.entities.User;
 import com.example.quanlytruonghoc.models.data.req.course.CourseReq;
@@ -43,7 +44,7 @@ public interface CourseMapper {
     void updateEntity(CourseReq request, @MappingTarget Course course);
 
     default PageResponse<CourseRes> toPageResponse(Page<Course> page) {
-        if (page == null) return null;
+        if (page == null) throw new NotFoundException("Không tìm thấy dữ liệu khóa học");
         return PageResponse.<CourseRes>builder()
                 .items(toResponseList(page.getContent()))
                 .page(page.getNumber())

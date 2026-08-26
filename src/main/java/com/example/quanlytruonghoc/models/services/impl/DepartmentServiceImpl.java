@@ -1,6 +1,7 @@
 package com.example.quanlytruonghoc.models.services.impl;
 
 import com.example.quanlytruonghoc.exceptions.BadRequestException;
+import com.example.quanlytruonghoc.exceptions.DataConflictException;
 import com.example.quanlytruonghoc.exceptions.NotFoundException;
 import com.example.quanlytruonghoc.models.data.dto.constants.RoleName;
 import com.example.quanlytruonghoc.models.data.entities.Department;
@@ -31,11 +32,11 @@ public class DepartmentServiceImpl implements IDepartmentService {
     @Override
     public DepartmentRes createDepartment(User currentUser, DepartmentReq req) {
         if (departmentRepository.findByName(req.getName()).isPresent()) {
-            throw new RuntimeException("Tên phòng ban đã được sử dụng");
+            throw new DataConflictException("Tên phòng ban đã được sử dụng");
         }
         School school = currentUser.getSchool();
         if (school == null) {
-            throw new BadRequestException("Người dùng chưa được gán vào trường");
+            throw new NotFoundException("Không tìm thấy trường được gán cho người dùng hiện tại");
         }
         Department department = departmentMapper.toEntity(req);
         department.setSchool(school);
@@ -51,10 +52,13 @@ public class DepartmentServiceImpl implements IDepartmentService {
         boolean isSuperAdmin = roleNames.contains(RoleName.SUPER_ADMIN);
         departmentRepository.findByName(req.getName()).ifPresent(existing -> {
             if (!existing.getId().equals(id)) {
-                throw new RuntimeException("Tên phòng ban đã được sử dụng bởi tài khoản khác!");
+                throw new DataConflictException("Tên phòng ban đã được sử dụng bởi tài khoản khác!");
             }
         });
-        boolean sameSchool = currentUser.getSchool() != null && currentUser.getSchool().getId().equals(school.getId());
+        if (!isSuperAdmin && school == null) {
+            throw new NotFoundException("Không tìm thấy trường được gán cho người dùng hiện tại");
+        }
+        boolean sameSchool = school != null && department.getSchool() != null && school.getId().equals(department.getSchool().getId());
 
         boolean sameDepartment = currentUser.getDepartment() != null && currentUser.getDepartment().getId().equals(department.getId());
         if (!isSuperAdmin ) {
@@ -72,12 +76,18 @@ public class DepartmentServiceImpl implements IDepartmentService {
     @Override
     public void deleteDepartment(User currentUser, Long id) {
         Department department = departmentRepository.findById(id).orElseThrow(() -> new NotFoundException("Không tìm thấy phòng ban này "));
-        School school = schoolRepository.findById(id).orElseThrow(() -> new NotFoundException("Không tìm trường này "));
+        School school = department.getSchool();
+        if (school == null) {
+            throw new NotFoundException("Không tìm thấy trường trực thuộc phòng ban này");
+        }
+        if (currentUser.getSchool() == null) {
+            throw new NotFoundException("Không tìm thấy trường được gán cho người dùng hiện tại");
+        }
         boolean sameSchool = currentUser.getSchool().getId().equals(school.getId());
         if (!sameSchool) {
             throw new BadRequestException("Bạn không có quyền xóa phòng ban của trường khác");
         }
-        boolean sameDepartment = currentUser.getDepartment().getId().equals(department.getId());
+        boolean sameDepartment = currentUser.getDepartment() != null && currentUser.getDepartment().getId().equals(department.getId());
         if (!sameDepartment) {
             throw new BadRequestException("Bạn không có quyền xóa phòng ban khác");
         }
@@ -88,6 +98,9 @@ public class DepartmentServiceImpl implements IDepartmentService {
     @Override
     public PageResponse<DepartmentRes> findAll(User currentUser,Pageable pageable) {
         School  school = currentUser.getSchool();
+        if (school == null) {
+            throw new NotFoundException("Không tìm thấy trường được gán cho người dùng hiện tại");
+        }
         return departmentMapper.toPageResponse(departmentRepository.findAllBySchool(school,pageable));
     }
 }
